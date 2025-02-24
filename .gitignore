@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment variables
+.env
+
+# Flask cache and logs
+instance/
+*.log
+
+# Flask uploaded files
+uploads/
+results/
+
+# VSCode settings
+.vscode/
+
+# macOS system files
+.DS_Store
+
+# Python virtual environment
+venv/
+env/
+style/
+
+# Node modules (if using Tailwind CLI with npm)
+node_modules/
+package-lock.json
+
+# Tailwind CSS build artifacts
+dist/
+public/
+build/
+*.css.map
+*.css
+
+# Compiled Static files
+static/
+
+# PyCharm files
+.idea/
+
+# Backup files
+*.bak
+*.swp

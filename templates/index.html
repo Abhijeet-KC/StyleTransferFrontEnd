@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Style Transfer Upload</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+
+    <div class="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl">
+        <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Style Transfer</h1>
+        
+        <form action="/" method="post" enctype="multipart/form-data" class="space-y-4">
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Content Image Upload -->
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Content Image:</label>
+                    <input 
+                        type="file" 
+                        name="content_image" 
+                        accept="image/*" 
+                        required
+                        class="block w-full text-gray-900 border rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+                        onchange="showPreview(event, 'content-preview')">
+                    <div class="mt-4">
+                        <img id="content-preview" class="w-full rounded-lg shadow-md" style="display: none;" />
+                    </div>
+                    <!-- Show uploaded content image if present -->
+                    {% if content_image %}
+                        <img src="{{ url_for('uploaded_file', filename=content_image) }}" class="w-full rounded-lg shadow-md mt-4">
+                    {% endif %}
+                </div>
+
+                <!-- Style Image Upload -->
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Style Image:</label>
+                    <input 
+                        type="file" 
+                        name="style_image" 
+                        accept="image/*" 
+                        required
+                        class="block w-full text-gray-900 border rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+                        onchange="showPreview(event, 'style-preview')">
+                    <div class="mt-4">
+                        <img id="style-preview" class="w-full rounded-lg shadow-md" style="display: none;" />
+                    </div>
+                    <!-- Show uploaded style image if present -->
+                    {% if style_image %}
+                        <img src="{{ url_for('uploaded_file', filename=style_image) }}" class="w-full rounded-lg shadow-md mt-4">
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="text-center mt-6">
+                <button 
+                    type="submit" 
+                    class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                    Upload and Apply Style
+                </button>
+            </div>
+        </form>
+
+        <!-- Result Image Section -->
+        {% if result_image %}
+        <div class="mt-8">
+            <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Result Image:</h2>
+            <img src="{{ url_for('result_file', filename=result_image) }}" class="w-full rounded-lg shadow-md">
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Image Preview Script -->
+    <script>
+        function showPreview(event, previewId) {
+            const input = event.target;
+            const reader = new FileReader();
+            reader.onload = function() {
+                const preview = document.getElementById(previewId);
+                preview.src = reader.result;
+                preview.style.display = 'block';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    </script>
+
+</body>
+</html>
