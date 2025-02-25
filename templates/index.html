@@ -6,58 +6,91 @@
     <title>Style Transfer Upload</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="{{ url_for('static', filename='js/select.js') }}"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+<body class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen flex items-center justify-center">
+    <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-4xl">
+        <h1 class="text-4xl font-extrabold text-center mb-8 text-black">
+            Style Transfer
+        </h1>
 
-    <div class="bg-white rounded-2xl shadow-lg p-8 w-full max-w-2xl">
-        <h1 class="text-3xl font-bold text-center mb-6 text-gray-800">Style Transfer</h1>
-        
-        <form action="/" method="post" enctype="multipart/form-data" class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
+        <form action="/" method="post" enctype="multipart/form-data" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <!-- Content Image Upload -->
-                <div>
-                    <label class="block text-gray-700 font-semibold mb-2">Content Image:</label>
+                <div class="space-y-4">
+                    <label class="block text-lg font-semibold text-black">Content Image:</label>
                     <input 
                         type="file" 
                         name="content_image" 
                         accept="image/*" 
                         required
-                        class="block w-full text-gray-900 border rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+                        class="block w-full text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                         onchange="showPreview(event, 'content-preview')">
                     <div class="mt-4">
-                        <img id="content-preview" class="w-full rounded-lg shadow-md" style="display: none;" />
+                        <img id="content-preview" class="w-full rounded-lg shadow-lg" style="display: none;" />
                     </div>
                     <!-- Show uploaded content image if present -->
                     {% if content_image %}
-                        <img src="{{ url_for('uploaded_file', filename=content_image) }}" class="w-full rounded-lg shadow-md mt-4">
+                        <img src="{{ url_for('uploaded_file', filename=content_image) }}" class="w-full rounded-lg shadow-lg mt-4">
                     {% endif %}
                 </div>
 
                 <!-- Style Image Upload -->
-                <div>
-                    <label class="block text-gray-700 font-semibold mb-2">Style Image:</label>
+                <div class="space-y-4">
+                    <label class="block text-lg font-semibold text-black">Style Image:</label>
                     <input 
                         type="file" 
                         name="style_image" 
                         accept="image/*" 
-                        required
-                        class="block w-full text-gray-900 border rounded-lg cursor-pointer bg-gray-50 focus:outline-none"
+                        class="block w-full text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
                         onchange="showPreview(event, 'style-preview')">
                     <div class="mt-4">
-                        <img id="style-preview" class="w-full rounded-lg shadow-md" style="display: none;" />
+                        <img id="style-preview" class="w-full rounded-lg shadow-lg" style="display: none;" />
                     </div>
-                    <!-- Show uploaded style image if present -->
-                    {% if style_image %}
-                        <img src="{{ url_for('uploaded_file', filename=style_image) }}" class="w-full rounded-lg shadow-md mt-4">
-                    {% endif %}
+                    <!-- Predefined Styles Dropdown -->
+                    <div class="mt-4">
+                        <label class="block text-lg font-semibold text-black">Predefined Styles:</label>
+                        <select 
+                            name="predefined_style" 
+                            id="predefined-style-select"
+                            class="block w-full text-gray-900 border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                            onchange="updateSelectedStyleImage()">
+                            <option value="">Select a predefined style</option>
+                            <option value="style1">Style 1: Impressionist</option>
+                            <option value="style2">Style 2: Modern Art</option>
+                            <option value="style3">Style 3: Abstract</option>
+                            <option value="style4">Style 4: Watercolor</option>
+                        </select>
+                    </div>
+                    <!-- Selected Style Image Preview -->
+                    <div id="selected-style-image" class="mt-4 hidden">
+                        <label class="block text-lg font-semibold text-black">Selected Style:</label>
+                        <img id="selected-style-preview" class="w-full rounded-lg shadow-lg" />
+                    </div>
+                    <!-- Style Strength Slider -->
+                    <div class="mt-4">
+                        <label class="block text-lg font-semibold text-black">Style Strength:</label>
+                        <input 
+                            type="range" 
+                            name="style_strength" 
+                            min="0" 
+                            max="10" 
+                            step="1" 
+                            value="5" 
+                            class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-purple-600">
+                        <div class="flex justify-between text-sm text-gray-600">
+                            <span>0</span>
+                            <span>10</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Submit Button -->
-            <div class="text-center mt-6">
+            <div class="text-center mt-8">
                 <button 
                     type="submit" 
-                    class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                    class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 transform hover:scale-105">
                     Upload and Apply Style
                 </button>
             </div>
@@ -65,26 +98,14 @@
 
         <!-- Result Image Section -->
         {% if result_image %}
-        <div class="mt-8">
-            <h2 class="text-2xl font-bold text-center text-gray-800 mb-4">Result Image:</h2>
-            <img src="{{ url_for('result_file', filename=result_image) }}" class="w-full rounded-lg shadow-md">
+        <div class="mt-12">
+            <h2 class="text-3xl font-extrabold text-center text-black mb-6">
+                Result Image:
+            </h2>
+            <img src="{{ url_for('result_file', filename=result_image) }}" class="w-full rounded-lg shadow-2xl">
         </div>
         {% endif %}
     </div>
-
-    <!-- Image Preview Script -->
-    <script>
-        function showPreview(event, previewId) {
-            const input = event.target;
-            const reader = new FileReader();
-            reader.onload = function() {
-                const preview = document.getElementById(previewId);
-                preview.src = reader.result;
-                preview.style.display = 'block';
-            };
-            reader.readAsDataURL(input.files[0]);
-        }
-    </script>
 
 </body>
 </html>
