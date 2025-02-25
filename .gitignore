@@ -36,8 +36,8 @@ build/
 *.css.map
 *.css
 
-# Compiled Static files
-static/
+# # Compiled Static files
+# static/
 
 # PyCharm files
 .idea/
