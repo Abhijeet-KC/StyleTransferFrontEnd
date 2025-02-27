@@ -9,7 +9,6 @@ import torch
 import torchvision.transforms as T
 from torchvision.utils import save_image
 
-
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
 RESULT_FOLDER = 'results'
@@ -41,18 +40,18 @@ def model(content_image_path, style_image_path):
     transfer_module = TransModule(config=trans_config).to(device)
     decoder = Decoder(d_model=768, seq_input=True).to(device)
 
-    checkpoint = torch.load('./.model/checkpoint_40000_epoch.pkl', map_location=torch.device('cpu'))  # Update the path if needed
+    checkpoint = torch.load('./.model/checkpoint_40000_epoch.pkl', map_location=device)  # Update the path if needed
 
     # Load the state dictionaries
     encoder.load_state_dict(checkpoint['encoder'])
     transfer_module.load_state_dict(checkpoint['transModule'])
     decoder.load_state_dict(checkpoint['decoder'])
 
-    #load the images using PIL
-    content_img = Image.open(content_image_path)
-    style_img = Image.open(style_image_path)
+    # Load the images using PIL
+    content_img = Image.open(content_image_path).convert('RGB')
+    style_img = Image.open(style_image_path).convert('RGB')
 
-    #convert the images to tensors
+    # Convert the images to tensors
     content_shape = content_img.size
     size = min(content_shape[1], content_shape[0])
 
@@ -66,12 +65,12 @@ def model(content_image_path, style_image_path):
         T.ToTensor(),
     ])
 
-    content_img = only_tensor_transforms(content_img).unsqueeze(0)
-    style_img = shape_transform(style_img).unsqueeze(0)
+    content_img = only_tensor_transforms(content_img).unsqueeze(0).to(device)
+    style_img = shape_transform(style_img).unsqueeze(0).to(device)
 
     # Forward pass through encoders
-    forward_content = encoder(content_img, arbitrary_input = True)  # [b, h, w, c]
-    forward_style = encoder(style_img, arbitrary_input = True)      # [b, h, w, c]
+    forward_content = encoder(content_img, arbitrary_input=True)  # [b, h, w, c]
+    forward_style = encoder(style_img, arbitrary_input=True)      # [b, h, w, c]
 
     output_content, content_res = forward_content[0], forward_content[2]  # [b, c, h, w]
     output_style, style_res = forward_style[0], forward_style[2]      # [b, c, h, w]
@@ -82,7 +81,7 @@ def model(content_image_path, style_image_path):
     # Decode the merged features
     output = decoder(merged_features, content_res)  # [b, c, h, w]
 
-    # convert ot jpg image and save
+    # Convert to jpg image and save
     output = output.squeeze(0).detach().cpu()
     save_image(output, os.path.join('results', 'result.png'))
 
@@ -96,8 +95,7 @@ def index():
         content_image = request.files['content_image']
         style_image = request.files['style_image']
 
-        # Check if the inputs are png or jp
-        
+        # Check if the inputs are png or jpg
         if content_image.filename == '' or style_image.filename == '':
             return 'No selected file'
         
@@ -110,7 +108,7 @@ def index():
 
         model(content_image_path, style_image_path)
         
-        # Assuming the result image is generated and saved as 'result.jpg'
+        # Assuming the result image is generated and saved as 'result.png'
         result_image_path = os.path.join(app.config['RESULT_FOLDER'], 'result.png')
         
         # Display uploaded and result images after processing

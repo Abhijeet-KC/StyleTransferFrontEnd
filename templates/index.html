@@ -6,14 +6,53 @@
     <title>Style Transfer Upload</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="{{ url_for('static', filename='js/select.js') }}"></script>
+    <script>
+        // Function to show preview of uploaded images
+        function showPreview(event, previewId) {
+            const input = event.target;
+            const preview = document.getElementById(previewId);
+
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+
+                reader.onload = function (e) {
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Function to update the selected predefined style image
+        function updateSelectedStyleImage() {
+            const select = document.getElementById('predefined-style-select');
+            const selectedStyleImageDiv = document.getElementById('selected-style-image');
+            const selectedStylePreview = document.getElementById('selected-style-preview');
+
+            const styleImages = {
+                'style1': '/static/styles/style1.jpg',
+                'style2': '/static/styles/style2.jpg',
+                'style3': '/static/styles/style3.jpg',
+                'style4': '/static/styles/style4.jpg'
+            };
+
+            const selectedStyle = select.value;
+
+            if (selectedStyle && styleImages[selectedStyle]) {
+                selectedStylePreview.src = styleImages[selectedStyle];
+                selectedStyleImageDiv.classList.remove('hidden');
+            } else {
+                selectedStyleImageDiv.classList.add('hidden');
+            }
+        }
+    </script>
 </head>
 <body class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen flex items-center justify-center">
     <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-4xl">
         <h1 class="text-4xl font-extrabold text-center mb-8 text-black">
             Style Transfer
         </h1>
-
         <form action="/" method="post" enctype="multipart/form-data" class="space-y-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <!-- Content Image Upload -->
@@ -23,18 +62,17 @@
                         type="file" 
                         name="content_image" 
                         accept="image/*" 
-                        required
+                        {% if not content_image %}required{% endif %}
                         class="block w-full text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                         onchange="showPreview(event, 'content-preview')">
                     <div class="mt-4">
-                        <img id="content-preview" class="w-full rounded-lg shadow-lg" style="display: none;" />
+                        <img id="content-preview" class="w-32 h-32 object-cover rounded-lg shadow-lg" style="display: none;" />
                     </div>
                     <!-- Show uploaded content image if present -->
                     {% if content_image %}
-                        <img src="{{ url_for('uploaded_file', filename=content_image) }}" class="w-full rounded-lg shadow-lg mt-4">
+                        <img src="{{ url_for('uploaded_file', filename=content_image) }}" class="w-32 h-32 object-cover rounded-lg shadow-lg mt-4">
                     {% endif %}
                 </div>
-
                 <!-- Style Image Upload -->
                 <div class="space-y-4">
                     <label class="block text-lg font-semibold text-black">Style Image:</label>
@@ -42,11 +80,16 @@
                         type="file" 
                         name="style_image" 
                         accept="image/*" 
+                        {% if not style_image %}required{% endif %}
                         class="block w-full text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
                         onchange="showPreview(event, 'style-preview')">
                     <div class="mt-4">
-                        <img id="style-preview" class="w-full rounded-lg shadow-lg" style="display: none;" />
+                        <img id="style-preview" class="w-32 h-32 object-cover rounded-lg shadow-lg" style="display: none;" />
                     </div>
+                    <!-- Show uploaded style image if present -->
+                    {% if style_image %}
+                        <img src="{{ url_for('uploaded_file', filename=style_image) }}" class="w-32 h-32 object-cover rounded-lg shadow-lg mt-4">
+                    {% endif %}
                     <!-- Predefined Styles Dropdown -->
                     <div class="mt-4">
                         <label class="block text-lg font-semibold text-black">Predefined Styles:</label>
@@ -65,7 +108,7 @@
                     <!-- Selected Style Image Preview -->
                     <div id="selected-style-image" class="mt-4 hidden">
                         <label class="block text-lg font-semibold text-black">Selected Style:</label>
-                        <img id="selected-style-preview" class="w-full rounded-lg shadow-lg" />
+                        <img id="selected-style-preview" class="w-32 h-32 object-cover rounded-lg shadow-lg" />
                     </div>
                     <!-- Style Strength Slider -->
                     <div class="mt-4">
@@ -85,7 +128,6 @@
                     </div>
                 </div>
             </div>
-
             <!-- Submit Button -->
             <div class="text-center mt-8">
                 <button 
@@ -95,7 +137,6 @@
                 </button>
             </div>
         </form>
-
         <!-- Result Image Section -->
         {% if result_image %}
         <div class="mt-12">
@@ -107,6 +148,5 @@
         </div>
         {% endif %}
     </div>
-
 </body>
 </html>
