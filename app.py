@@ -82,7 +82,7 @@ def model(content_image_path, style_image_path):
     output = decoder(merged_features, content_res)  # [b, c, h, w]
 
     # Convert to jpg image and save
-    output = output.squeeze(0).detach().cpu()
+    output = output.detach().cpu()
     save_image(output, os.path.join('results', 'result.png'))
 
 @app.route('/', methods=['GET', 'POST'])
