@@ -6,6 +6,10 @@
     <title>Style Transfer Upload</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+<<<<<<< HEAD
+=======
+
+>>>>>>> 9d0730da2edd74c6b34350e379c9badf317b6d4f
     <script>
         // Function to show preview of uploaded images
         function showPreview(event, previewId) {
@@ -24,6 +28,7 @@
             }
         }
 
+<<<<<<< HEAD
         // Function to update the selected predefined style image
         function updateSelectedStyleImage() {
             const select = document.getElementById('predefined-style-select');
@@ -46,6 +51,62 @@
                 selectedStyleImageDiv.classList.add('hidden');
             }
         }
+=======
+        // Map predefined styles to their corresponding image URLs
+        const predefinedStyles = {
+            "impressionist": "/static/predefined/impressionist.jpg",
+            "modern_art": "/static/predefined/modern_art.jpg",
+            "abstract": "/static/predefined/abstract.jpg",
+            "water_color": "/static/predefined/water_color.jpg",
+        };
+
+        // Function to update the selected style image preview and set hidden input
+        function updateSelectedStyleImage() {
+            const selectElement = document.getElementById("predefined-style-select");
+            const selectedStyle = selectElement.value;
+            const selectedStyleImageDiv = document.getElementById("selected-style-image");
+            const selectedStylePreview = document.getElementById("selected-style-preview");
+            const hiddenStyleInput = document.getElementById("predefined-style-hidden");
+            const styleImageInput = document.querySelector("input[name='style_image']");
+
+            if (selectedStyle && predefinedStyles[selectedStyle]) {
+                // Show the selected style image preview
+                selectedStylePreview.src = predefinedStyles[selectedStyle];
+                selectedStyleImageDiv.classList.remove("hidden");
+
+                // Set the hidden input to the predefined style image path
+                hiddenStyleInput.value = predefinedStyles[selectedStyle];
+
+                // Hide the file input for the style image if a predefined style is selected
+                styleImageInput.removeAttribute("required");
+
+            } else {
+                // Hide the selected style image preview if no valid option is selected
+                selectedStyleImageDiv.classList.add("hidden");
+
+                // Clear the hidden input value if no predefined style is selected
+                hiddenStyleInput.value = "";
+
+                // Make the file input for the style image required again
+                styleImageInput.setAttribute("required", true);
+            }
+        }
+
+        // Ensure selection persists on page reload
+        document.addEventListener("DOMContentLoaded", function() {
+            // Run the update function once when the page loads
+            updateSelectedStyleImage();
+            
+            // Set the predefined style if there is one already selected
+            const selectElement = document.getElementById("predefined-style-select");
+            const selectedStyle = selectElement.value;
+            if (selectedStyle && predefinedStyles[selectedStyle]) {
+                const selectedStylePreview = document.getElementById("selected-style-preview");
+                selectedStylePreview.src = predefinedStyles[selectedStyle];
+                document.getElementById("selected-style-image").classList.remove("hidden");
+            }
+        });
+>>>>>>> 9d0730da2edd74c6b34350e379c9badf317b6d4f
     </script>
 </head>
 <body class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen flex items-center justify-center">
@@ -99,10 +160,10 @@
                             class="block w-full text-gray-900 border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
                             onchange="updateSelectedStyleImage()">
                             <option value="">Select a predefined style</option>
-                            <option value="style1">Style 1: Impressionist</option>
-                            <option value="style2">Style 2: Modern Art</option>
-                            <option value="style3">Style 3: Abstract</option>
-                            <option value="style4">Style 4: Watercolor</option>
+                            <option value="impressionist">Style 1: Impressionist</option>
+                            <option value="modern_art">Style 2: Modern Art</option>
+                            <option value="abstract">Style 3: Abstract</option>
+                            <option value="water_color">Style 4: Watercolor</option>
                         </select>
                     </div>
                     <!-- Selected Style Image Preview -->
@@ -115,19 +176,26 @@
                         <label class="block text-lg font-semibold text-black">Style Strength:</label>
                         <input 
                             type="range" 
-                            name="style_strength" 
+                            id="style-strength-slider"
+                            name="alpha" 
                             min="0" 
-                            max="10" 
-                            step="1" 
-                            value="5" 
+                            max="1" 
+                            step="0.25" 
+                            value="1" 
                             class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-purple-600">
                         <div class="flex justify-between text-sm text-gray-600">
                             <span>0</span>
-                            <span>10</span>
+                            <span>1</span>
                         </div>
                     </div>
                 </div>
             </div>
+<<<<<<< HEAD
+=======
+            <!-- Hidden Input for Predefined Style -->
+            <input type="hidden" id="predefined-style-hidden" name="predefined_style_image">
+
+>>>>>>> 9d0730da2edd74c6b34350e379c9badf317b6d4f
             <!-- Submit Button -->
             <div class="text-center mt-8">
                 <button 

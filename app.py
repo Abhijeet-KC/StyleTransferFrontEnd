@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, send_file, url_for
 from werkzeug.utils import secure_filename
 import os
-from PIL import Image
+from PIL import Image, ImageEnhance
 from Model.Encoder import Encoder
 from Model.TransModule import TransModule, TransModule_Config
 from Model.Decoder import Decoder
@@ -21,7 +21,7 @@ if not os.path.exists(UPLOAD_FOLDER):
 if not os.path.exists(RESULT_FOLDER):
     os.makedirs(RESULT_FOLDER)
 
-def model(content_image_path, style_image_path):
+def model(content_image_path, style_image_path, alpha=1.0):
     # Load Device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -50,6 +50,15 @@ def model(content_image_path, style_image_path):
     # Load the images using PIL
     content_img = Image.open(content_image_path).convert('RGB')
     style_img = Image.open(style_image_path).convert('RGB')
+
+    if alpha > 0:
+        # Reduce contrast
+        enhancer = ImageEnhance.Contrast(style_img)
+        style_img = enhancer.enhance(0.5 + 0.5 * alpha)  # 0 = no contrast (gray), 1 = original
+
+        # Reduce saturation
+        enhancer = ImageEnhance.Color(style_img)
+        style_img = enhancer.enhance(0.5 + 0.5 * alpha)  # 0 = grayscale, 1 = original
 
     # Convert the images to tensors
     content_shape = content_img.size
@@ -85,32 +94,50 @@ def model(content_image_path, style_image_path):
     output = output.squeeze(0).detach().cpu()
     save_image(output, os.path.join('results', 'result.png'))
 
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
+        alpha = float(request.form.get('alpha'))
+
+        default_style = request.form.get('predefined_style')
+
+        print(default_style)
+
         # Handle file uploads
         if 'content_image' not in request.files or 'style_image' not in request.files:
             return 'No file part'
         
         content_image = request.files['content_image']
-        style_image = request.files['style_image']
-
-        # Check if the inputs are png or jpg
-        if content_image.filename == '' or style_image.filename == '':
-            return 'No selected file'
         
-        # Save uploaded images
+        # Check if a predefined style is selected
+        if default_style:
+            # Use predefined style image if selected
+            style_image_path = os.path.join('static\predefined', f"{default_style}.jpg")
+            print(style_image_path)
+            style_image = None  # Predefined style, so no file upload needed
+        else:
+            style_image = request.files['style_image']
+            if style_image.filename == '':
+                return 'No selected file for style image'
+            style_image_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(style_image.filename))
+            style_image.save(style_image_path)
+
+        if content_image.filename == '':
+            return 'No selected file for content image'
+
+        # Save uploaded content image
         content_image_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(content_image.filename))
-        style_image_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(style_image.filename))
-        
         content_image.save(content_image_path)
-        style_image.save(style_image_path)
 
-        model(content_image_path, style_image_path)
-        
+        print(alpha)
+        model(content_image_path, style_image_path, alpha)
+
         # Assuming the result image is generated and saved as 'result.png'
         result_image_path = os.path.join(app.config['RESULT_FOLDER'], 'result.png')
-        
+
+        print(style_image_path)
+
         # Display uploaded and result images after processing
         return render_template(
             'index.html', 
@@ -122,15 +149,18 @@ def index():
     # If GET request, show the form without the result image
     return render_template('index.html')
 
+
 # Route to serve uploaded images
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_file(os.path.join(app.config['UPLOAD_FOLDER'], filename), mimetype='image/jpeg')
 
+
 # Route to serve the result image
 @app.route('/results/<filename>')
 def result_file(filename):
     return send_file(os.path.join(app.config['RESULT_FOLDER'], filename), mimetype='image/jpeg')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
