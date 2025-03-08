@@ -6,10 +6,6 @@
     <title>Style Transfer Upload</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-<<<<<<< HEAD
-=======
-
->>>>>>> 9d0730da2edd74c6b34350e379c9badf317b6d4f
     <script>
         // Function to show preview of uploaded images
         function showPreview(event, previewId) {
@@ -28,30 +24,6 @@
             }
         }
 
-<<<<<<< HEAD
-        // Function to update the selected predefined style image
-        function updateSelectedStyleImage() {
-            const select = document.getElementById('predefined-style-select');
-            const selectedStyleImageDiv = document.getElementById('selected-style-image');
-            const selectedStylePreview = document.getElementById('selected-style-preview');
-
-            const styleImages = {
-                'style1': '/static/styles/style1.jpg',
-                'style2': '/static/styles/style2.jpg',
-                'style3': '/static/styles/style3.jpg',
-                'style4': '/static/styles/style4.jpg'
-            };
-
-            const selectedStyle = select.value;
-
-            if (selectedStyle && styleImages[selectedStyle]) {
-                selectedStylePreview.src = styleImages[selectedStyle];
-                selectedStyleImageDiv.classList.remove('hidden');
-            } else {
-                selectedStyleImageDiv.classList.add('hidden');
-            }
-        }
-=======
         // Map predefined styles to their corresponding image URLs
         const predefinedStyles = {
             "impressionist": "/static/predefined/impressionist.jpg",
@@ -106,7 +78,6 @@
                 document.getElementById("selected-style-image").classList.remove("hidden");
             }
         });
->>>>>>> 9d0730da2edd74c6b34350e379c9badf317b6d4f
     </script>
 </head>
 <body class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen flex items-center justify-center">
