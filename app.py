@@ -36,6 +36,7 @@ def model(content_image_path, style_image_path, alpha=1.0):
         drop_path_rate=0.,
         patch_norm=True
     ).to(device)
+
     trans_config = TransModule_Config(nlayer=3, d_model=768, nhead=8, norm_first=True)
     transfer_module = TransModule(config=trans_config).to(device)
     decoder = Decoder(d_model=768, seq_input=True).to(device)
@@ -65,14 +66,8 @@ def model(content_image_path, style_image_path, alpha=1.0):
     size = min(content_shape[1], content_shape[0])
 
     # Preprocess the images
-    only_tensor_transforms = T.Compose([
-        T.ToTensor(),
-    ])
-
-    shape_transform = T.Compose([
-        T.Resize(size),
-        T.ToTensor(),
-    ])
+    only_tensor_transforms = T.Compose([T.ToTensor()])
+    shape_transform = T.Compose([T.Resize(size), T.ToTensor()])
 
     content_img = only_tensor_transforms(content_img).unsqueeze(0).to(device)
     style_img = shape_transform(style_img).unsqueeze(0).to(device)
@@ -92,30 +87,25 @@ def model(content_image_path, style_image_path, alpha=1.0):
 
     # Convert to jpg image and save
     output = output.squeeze(0).detach().cpu()
-    save_image(output, os.path.join('results', 'result.png'))
+    save_image(output, os.path.join(RESULT_FOLDER, 'result.png'))
 
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         alpha = float(request.form.get('alpha'))
-
         default_style = request.form.get('predefined_style')
 
-        print(default_style)
-
         # Handle file uploads
-        if 'content_image' not in request.files or 'style_image' not in request.files:
-            return 'No file part'
-        
+        if 'content_image' not in request.files or ('style_image' not in request.files and not default_style):
+            return 'No file part or style image'
+
         content_image = request.files['content_image']
-        
-        # Check if a predefined style is selected
+
+        # Handle predefined style
         if default_style:
-            # Use predefined style image if selected
-            style_image_path = os.path.join('static\predefined', f"{default_style}.jpg")
-            print(style_image_path)
-            style_image = None  # Predefined style, so no file upload needed
+            style_image_path = os.path.join('static', 'predefined', f"{default_style}.jpg")
+            style_image = None  # No file upload needed, using predefined style
         else:
             style_image = request.files['style_image']
             if style_image.filename == '':
@@ -130,24 +120,26 @@ def index():
         content_image_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(content_image.filename))
         content_image.save(content_image_path)
 
-        print(alpha)
-        model(content_image_path, style_image_path, alpha)
+        # If alpha > 0.0, apply style transfer
+        if alpha > 0.0:
+            model(content_image_path, style_image_path, alpha)
+        else:
+            # Process content image even if no style transfer is applied
+            content_img = Image.open(content_image_path).convert('RGB')
+            content_img.save(os.path.join(RESULT_FOLDER, 'result.png'))
 
-        # Assuming the result image is generated and saved as 'result.png'
-        result_image_path = os.path.join(app.config['RESULT_FOLDER'], 'result.png')
-
-        print(style_image_path)
+        # Return the result image
+        result_image_path = os.path.join(RESULT_FOLDER, 'result.png')
 
         # Display uploaded and result images after processing
         return render_template(
-            'index.html', 
-            content_image=os.path.basename(content_image_path),
-            style_image=os.path.basename(style_image_path),
+            'index.html',
             result_image=os.path.basename(result_image_path)
         )
 
     # If GET request, show the form without the result image
     return render_template('index.html')
+
 
 
 # Route to serve uploaded images
