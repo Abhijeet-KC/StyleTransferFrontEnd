@@ -75,23 +75,25 @@ class TransformerDecoderLayer(nn.Module):
     self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
     
 
-  def forward(self, x, y):
+  def forward(self, x, y, style_strength=1.0):
     """
-      Args:
-        x: output of the former layer
-        y: memery of the encoder layer
+    Args:
+      x: Output of the former layer (content features)
+      y: Memory from the encoder layer (style features)
+      style_strength: Float value (0 to 1) controlling the strength of style transfer
     """
-    if self.norm_first == True:
-      x = x + self.drop_path(self.attn1(self.norm1(x)))
-      x = x + self.drop_path(self.attn2(self.norm2(x), y))
-      x = x + self.drop_path(self.mlp(self.norm3(x)))
+    if self.norm_first:
+        x = x + self.drop_path(self.attn1(self.norm1(x)))  # Self-attention
+        styled_x = self.drop_path(self.attn2(self.norm2(x), y))  # Cross-attention (style)
+        x = x + style_strength * styled_x  # Blend style based on strength
+        x = x + self.drop_path(self.mlp(self.norm3(x)))  # Feed-forward network
     else:
-      x = self.norm1(x + self.drop_path(self.attn1(x)))
-      x = self.norm2(x + self.drop_path(self.attn2(x, y)))
-      x = self.norm3(x + self.drop_path(self.mlp(x)))
+        x = self.norm1(x + self.drop_path(self.attn1(x)))  # Self-attention
+        styled_x = self.drop_path(self.attn2(self.norm2(x), y))  # Cross-attention (style)
+        x = self.norm2(x + style_strength * styled_x)  # Blend style based on strength
+        x = self.norm3(x + self.drop_path(self.mlp(x)))  # Feed-forward network
     return x
-
-
+  
 
 class TransModule(nn.Module):
   """The Transfer Module of Style Transfer via Transformer
@@ -122,8 +124,8 @@ class TransModule(nn.Module):
   def forward(self, content_feature, style_feature):
     """
     Args:
-      content_feature: Content features，for producing Q sequences. Similar to tgt sequences in pytorch. (Tensor,[Batch,sequence,dim])
-      style_feature : Style features，for producing K,V sequences.Similar to memory sequences in pytorch.(Tensor,[Batch,sequence,dim])
+      content_feature: Content featuresfor producing Q sequences. Similar to tgt sequences in pytorch. (Tensor,[Batch,sequence,dim])
+      style_feature : Style features, for producing K,V sequences.Similar to memory sequences in pytorch.(Tensor,[Batch,sequence,dim])
 
     Returns:
       Tensor with shape (Batch,sequence,dim)
