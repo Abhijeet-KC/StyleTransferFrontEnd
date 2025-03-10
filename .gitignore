@@ -46,4 +46,4 @@ build/
 *.bak
 *.swp
 
-.model\checkpoint_40000_epoch.pkl
+*.pkl

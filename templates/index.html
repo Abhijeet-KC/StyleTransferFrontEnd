@@ -1,194 +1,289 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Style Transfer Upload</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/loader.css') }}"
+    />
     <script>
-        // Function to show preview of uploaded images
-        function showPreview(event, previewId) {
-            const input = event.target;
-            const preview = document.getElementById(previewId);
+      // Function to show preview of uploaded images
+      function showPreview(event, previewId) {
+        const input = event.target;
+        const preview = document.getElementById(previewId);
 
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
+        if (input.files && input.files[0]) {
+          const reader = new FileReader();
 
-                reader.onload = function (e) {
-                    preview.src = e.target.result;
-                    preview.style.display = 'block';
-                };
+          reader.onload = function (e) {
+            preview.src = e.target.result;
+            preview.style.display = "block";
+          };
 
-                reader.readAsDataURL(input.files[0]);
-            }
+          reader.readAsDataURL(input.files[0]);
         }
+      }
 
-        // Map predefined styles to their corresponding image URLs
-        const predefinedStyles = {
-            "impressionist": "/static/predefined/impressionist.jpg",
-            "modern_art": "/static/predefined/modern_art.jpg",
-            "abstract": "/static/predefined/abstract.jpg",
-            "water_color": "/static/predefined/water_color.jpg",
-        };
+      // Map predefined styles to their corresponding image URLs
+      const predefinedStyles = {
+        impressionist: "/static/predefined/impressionist.jpg",
+        modern_art: "/static/predefined/modern_art.jpg",
+        abstract: "/static/predefined/abstract.jpg",
+        water_color: "/static/predefined/water_color.jpg",
+      };
 
-        // Function to update the selected style image preview and set hidden input
-        function updateSelectedStyleImage() {
-            const selectElement = document.getElementById("predefined-style-select");
-            const selectedStyle = selectElement.value;
-            const selectedStyleImageDiv = document.getElementById("selected-style-image");
-            const selectedStylePreview = document.getElementById("selected-style-preview");
-            const hiddenStyleInput = document.getElementById("predefined-style-hidden");
-            const styleImageInput = document.querySelector("input[name='style_image']");
+      // Function to update the selected style image preview and set hidden input
+      function updateSelectedStyleImage() {
+        const selectElement = document.getElementById(
+          "predefined-style-select"
+        );
+        const selectedStyle = selectElement.value;
+        const selectedStyleImageDiv = document.getElementById(
+          "selected-style-image"
+        );
+        const selectedStylePreview = document.getElementById(
+          "selected-style-preview"
+        );
+        const hiddenStyleInput = document.getElementById(
+          "predefined-style-hidden"
+        );
+        const styleImageInput = document.querySelector(
+          "input[name='style_image']"
+        );
 
-            if (selectedStyle && predefinedStyles[selectedStyle]) {
-                // Show the selected style image preview
-                selectedStylePreview.src = predefinedStyles[selectedStyle];
-                selectedStyleImageDiv.classList.remove("hidden");
+        if (selectedStyle && predefinedStyles[selectedStyle]) {
+          // Show the selected style image preview
+          selectedStylePreview.src = predefinedStyles[selectedStyle];
+          selectedStyleImageDiv.classList.remove("hidden");
 
-                // Set the hidden input to the predefined style image path
-                hiddenStyleInput.value = predefinedStyles[selectedStyle];
+          // Set the hidden input to the predefined style image path
+          hiddenStyleInput.value = predefinedStyles[selectedStyle];
 
-                // Hide the file input for the style image if a predefined style is selected
-                styleImageInput.removeAttribute("required");
+          // Hide the file input for the style image if a predefined style is selected
+          styleImageInput.removeAttribute("required");
+        } else {
+          // Hide the selected style image preview if no valid option is selected
+          selectedStyleImageDiv.classList.add("hidden");
 
-            } else {
-                // Hide the selected style image preview if no valid option is selected
-                selectedStyleImageDiv.classList.add("hidden");
+          // Clear the hidden input value if no predefined style is selected
+          hiddenStyleInput.value = "";
 
-                // Clear the hidden input value if no predefined style is selected
-                hiddenStyleInput.value = "";
-
-                // Make the file input for the style image required again
-                styleImageInput.setAttribute("required", true);
-            }
+          // Make the file input for the style image required again
+          styleImageInput.setAttribute("required", true);
         }
+      }
 
-        // Ensure selection persists on page reload
-        document.addEventListener("DOMContentLoaded", function() {
-            // Run the update function once when the page loads
-            updateSelectedStyleImage();
-            
-            // Set the predefined style if there is one already selected
-            const selectElement = document.getElementById("predefined-style-select");
-            const selectedStyle = selectElement.value;
-            if (selectedStyle && predefinedStyles[selectedStyle]) {
-                const selectedStylePreview = document.getElementById("selected-style-preview");
-                selectedStylePreview.src = predefinedStyles[selectedStyle];
-                document.getElementById("selected-style-image").classList.remove("hidden");
-            }
-        });
+      // Ensure selection persists on page reload
+      document.addEventListener("DOMContentLoaded", function () {
+        // Run the update function once when the page loads
+        updateSelectedStyleImage();
+
+        // Set the predefined style if there is one already selected
+        const selectElement = document.getElementById(
+          "predefined-style-select"
+        );
+        const selectedStyle = selectElement.value;
+        if (selectedStyle && predefinedStyles[selectedStyle]) {
+          const selectedStylePreview = document.getElementById(
+            "selected-style-preview"
+          );
+          selectedStylePreview.src = predefinedStyles[selectedStyle];
+          document
+            .getElementById("selected-style-image")
+            .classList.remove("hidden");
+        }
+      });
     </script>
-</head>
-<body class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen flex items-center justify-center">
+  </head>
+  <body
+    class="bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen flex items-center justify-center"
+  >
     <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-4xl">
-        <h1 class="text-4xl font-extrabold text-center mb-8 text-black">
-            Style Transfer
-        </h1>
-        <form action="/" method="post" enctype="multipart/form-data" class="space-y-6">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Content Image Upload -->
-                <div class="space-y-4">
-                    <label class="block text-lg font-semibold text-black">Content Image:</label>
-                    <input 
-                        type="file" 
-                        name="content_image" 
-                        accept="image/*" 
-                        {% if not content_image %}required{% endif %}
-                        class="block w-full text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                        onchange="showPreview(event, 'content-preview')">
-                    <div class="mt-4">
-                        <img id="content-preview" class="w-32 h-32 object-cover rounded-lg shadow-lg" style="display: none;" />
-                    </div>
-                    <!-- Show uploaded content image if present -->
-                    {% if content_image %}
-                        <img src="{{ url_for('uploaded_file', filename=content_image) }}" class="w-32 h-32 object-cover rounded-lg shadow-lg mt-4">
-                    {% endif %}
-                </div>
-                <!-- Style Image Upload -->
-                <div class="space-y-4">
-                    <label class="block text-lg font-semibold text-black">Style Image:</label>
-                    <input 
-                        type="file" 
-                        name="style_image" 
-                        accept="image/*" 
-                        {% if not style_image %}required{% endif %}
-                        class="block w-full text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
-                        onchange="showPreview(event, 'style-preview')">
-                    <div class="mt-4">
-                        <img id="style-preview" class="w-32 h-32 object-cover rounded-lg shadow-lg" style="display: none;" />
-                    </div>
-                    <!-- Show uploaded style image if present -->
-                    {% if style_image %}
-                        <img src="{{ url_for('uploaded_file', filename=style_image) }}" class="w-32 h-32 object-cover rounded-lg shadow-lg mt-4">
-                    {% endif %}
-                    <!-- Predefined Styles Dropdown -->
-                    <div class="mt-4">
-                        <label class="block text-lg font-semibold text-black">Predefined Styles:</label>
-                        <select 
-                            name="predefined_style" 
-                            id="predefined-style-select"
-                            class="block w-full text-gray-900 border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
-                            onchange="updateSelectedStyleImage()">
-                            <option value="">Select a predefined style</option>
-                            <option value="impressionist">Style 1: Impressionist</option>
-                            <option value="modern_art">Style 2: Modern Art</option>
-                            <option value="abstract">Style 3: Abstract</option>
-                            <option value="water_color">Style 4: Watercolor</option>
-                        </select>
-                    </div>
-                    <!-- Selected Style Image Preview -->
-                    <div id="selected-style-image" class="mt-4 hidden">
-                        <label class="block text-lg font-semibold text-black">Selected Style:</label>
-                        <img id="selected-style-preview" class="w-32 h-32 object-cover rounded-lg shadow-lg" />
-                    </div>
-                   <!-- Style Strength Slider -->
-                    <div class="mt-4">
-                        <label class="block text-lg font-semibold text-black">Style Strength:</label>
-                        <input 
-                            type="range" 
-                            id="style-strength-slider"
-                            name="alpha" 
-                            min="0" 
-                            max="1" 
-                            step="0.25" 
-                            value="1" 
-                            class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-purple-600">
-                        <div class="flex justify-between text-sm text-gray-600">
-                            <span>0</span>
-                            <span>0.25</span>
-                            <span>0.5</span>
-                            <span>0.75</span>
-                            <span>1</span>
-                        </div>
-                    </div>
+      <h1 class="text-4xl font-extrabold text-center mb-8 text-black">
+        Style Transfer
+      </h1>
+      <form
+        action="/"
+        method="post"
+        enctype="multipart/form-data"
+        class="space-y-6"
+        onsubmit="showLoader()"
+      >
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- Content Image Upload -->
+          <div class="space-y-4">
+            <label class="block text-lg font-semibold text-black"
+              >Content Image:</label
+            >
+            <input
+              type="file"
+              name="content_image"
+              accept="image/*"
+              {%
+              if
+              not
+              content_image
+              %}required{%
+              endif
+              %}
+              class="block w-full text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+              onchange="showPreview(event, 'content-preview')"
+            />
+            <div class="mt-4">
+              <img
+                id="content-preview"
+                class="w-32 h-32 object-cover rounded-lg shadow-lg"
+                style="display: none"
+              />
+            </div>
+            <!-- Show uploaded content image if present -->
+            {% if content_image %}
+            <img
+              src="{{ url_for('uploaded_file', filename=content_image) }}"
+              class="w-32 h-32 object-cover rounded-lg shadow-lg mt-4"
+            />
+            {% endif %}
+          </div>
+          <!-- Style Image Upload -->
+          <div class="space-y-4">
+            <label class="block text-lg font-semibold text-black"
+              >Style Image:</label
+            >
+            <input
+              type="file"
+              name="style_image"
+              accept="image/*"
+              {%
+              if
+              not
+              style_image
+              %}required{%
+              endif
+              %}
+              class="block w-full text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+              onchange="showPreview(event, 'style-preview')"
+            />
+            <div class="mt-4">
+              <img
+                id="style-preview"
+                class="w-32 h-32 object-cover rounded-lg shadow-lg"
+                style="display: none"
+              />
+            </div>
+            <!-- Show uploaded style image if present -->
+            {% if style_image %}
+            <img
+              src="{{ url_for('uploaded_file', filename=style_image) }}"
+              class="w-32 h-32 object-cover rounded-lg shadow-lg mt-4"
+            />
+            {% endif %}
+            <!-- Predefined Styles Dropdown -->
+            <div class="mt-4">
+              <label class="block text-lg font-semibold text-black"
+                >Predefined Styles:</label
+              >
+              <select
+                name="predefined_style"
+                id="predefined-style-select"
+                class="block w-full text-gray-900 border border-gray-300 rounded-lg py-2 px-3 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200"
+                onchange="updateSelectedStyleImage()"
+              >
+                <option value="">Select a predefined style</option>
+                <option value="impressionist">Style 1: Impressionist</option>
+                <option value="modern_art">Style 2: Modern Art</option>
+                <option value="abstract">Style 3: Abstract</option>
+                <option value="water_color">Style 4: Watercolor</option>
+              </select>
+            </div>
+            <!-- Selected Style Image Preview -->
+            <div id="selected-style-image" class="mt-4 hidden">
+              <label class="block text-lg font-semibold text-black"
+                >Selected Style:</label
+              >
+              <img
+                id="selected-style-preview"
+                class="w-32 h-32 object-cover rounded-lg shadow-lg"
+              />
+            </div>
+            <!-- Style Strength Slider -->
+            <div class="mt-4">
+              <label class="block text-lg font-semibold text-black"
+                >Style Strength:</label
+              >
+              <input
+                type="range"
+                id="style-strength-slider"
+                name="alpha"
+                min="0"
+                max="1"
+                step="0.25"
+                value="1"
+                class="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-purple-600"
+              />
+              <div class="flex justify-between text-sm text-gray-600">
+                <span>0</span>
+                <span>0.25</span>
+                <span>0.5</span>
+                <span>0.75</span>
+                <span>1</span>
+              </div>
+            </div>
 
             <!-- Hidden Input for Predefined Style -->
-            <input type="hidden" id="predefined-style-hidden" name="predefined_style_image">
+            <input
+              type="hidden"
+              id="predefined-style-hidden"
+              name="predefined_style_image"
+            />
 
             <!-- Submit Button -->
             <div class="text-center mt-8">
-                <button 
-                    type="submit" 
-                    class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 transform hover:scale-105">
-                    Upload and Apply Style
-                </button>
+              <button
+                type="submit"
+                class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition duration-300 transform hover:scale-105"
+              >
+                Upload and Apply Style
+              </button>
             </div>
-            </div>
-            </div>
-        </form>
-        <!-- Result Image Section -->
-        {% if result_image %}
-        <div class="mt-12 flex-col justify-center">
-            <h2 class="text-3xl font-extrabold text-center text-black mb-6">
-                Result Image:
-            </h2>
-            <div class="flex justify-center">
-                <img src="{{ url_for('result_file', filename=result_image) }}" 
-                class="rounded shadow-2xl h-200 w-200">
-            </div>
+
         </div>
-        {% endif %}
     </div>
-</body>
+</form>
+<div class="flex justify-center mt-8">
+<!-- loading animation -->
+<div id="loader" class="loader hidden">
+  <!-- Loader style, make sure the CSS loader animation is defined properly -->
+</div>
+</div>
+<script>
+        function showLoader() {
+          document.getElementById("loader").classList.remove("hidden");
+        }
+        const form = document.querySelector("form");
+        const loader = document.getElementById("loader");
+
+        form.addEventListener("submit", function () {
+          loader.style.display = "flex";
+        });
+      </script>
+      <!-- Result Image Section -->
+      {% if result_image %}
+      <div class="mt-12 flex-col justify-center">
+        <h2 class="text-3xl font-extrabold text-center text-black mb-6">
+          Result Image:
+        </h2>
+        <div class="flex justify-center">
+          <img
+            src="{{ url_for('result_file', filename=result_image) }}"
+            class="rounded shadow-2xl h-200 w-200"
+          />
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </body>
 </html>
