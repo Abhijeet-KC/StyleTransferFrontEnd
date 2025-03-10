@@ -60,7 +60,6 @@ class Decoder(nn.Module):
             (H, W) = input_resolution
             x = x.permute(0, 2, 1).reshape(B, C, H, W)
             x = self.decoder(x) 
-            x = nn.Tanh()(x) 
             return x
 
 # Testing

@@ -88,8 +88,7 @@ def model(content_image_path, style_image_path, alpha=1.0):
     # Convert to jpg image and save
     output = output.squeeze(0).detach().cpu()
     save_image(output, os.path.join(RESULT_FOLDER, 'result.png'))
-
-
+    
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
