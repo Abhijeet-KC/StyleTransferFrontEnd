@@ -41,7 +41,7 @@ def model(content_image_path, style_image_path, alpha=1.0):
     transfer_module = TransModule(config=trans_config).to(device)
     decoder = Decoder(d_model=768, seq_input=True).to(device)
 
-    checkpoint = torch.load('./.model/checkpoint_40000_epoch.pkl', map_location=device)  # Update the path if needed
+    checkpoint = torch.load('./.model/checkpoint_40000_epoch.pkl', map_location=torch.device('cpu'))  # Update the path if needed
 
     # Load the state dictionaries
     encoder.load_state_dict(checkpoint['encoder'])
@@ -69,8 +69,8 @@ def model(content_image_path, style_image_path, alpha=1.0):
     only_tensor_transforms = T.Compose([T.ToTensor()])
     shape_transform = T.Compose([T.Resize(size), T.ToTensor()])
 
-    content_img = only_tensor_transforms(content_img).unsqueeze(0).to(device)
-    style_img = shape_transform(style_img).unsqueeze(0).to(device)
+    content_img = only_tensor_transforms(content_img).unsqueeze(0)
+    style_img = shape_transform(style_img).unsqueeze(0)
 
     # Forward pass through encoders
     forward_content = encoder(content_img, arbitrary_input=True)  # [b, h, w, c]
@@ -88,7 +88,8 @@ def model(content_image_path, style_image_path, alpha=1.0):
     # Convert to jpg image and save
     output = output.squeeze(0).detach().cpu()
     save_image(output, os.path.join(RESULT_FOLDER, 'result.png'))
-    
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
