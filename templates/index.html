@@ -273,15 +273,28 @@
       <!-- Result Image Section -->
       {% if result_image %}
       <div class="mt-12 flex-col justify-center">
-        <h2 class="text-3xl font-extrabold text-center text-black mb-6">
-          Result Image:
-        </h2>
-        <div class="flex justify-center">
-          <img
-            src="{{ url_for('result_file', filename=result_image) }}"
-            class="rounded shadow-2xl h-200 w-200"
-          />
-        </div>
+          <h2 class="text-3xl font-extrabold text-center text-black mb-6">
+              Result Image:
+          </h2>
+          <div class="flex justify-center flex-col items-center">
+              <img src="{{ url_for('result_file', filename=result_image) }}" 
+                  class="rounded shadow-2xl h-200 w-200 mb-4" 
+                  id="resultImg"/>
+
+              <!-- Download Button -->
+              <a href="{{ url_for('result_file', filename=result_image) }}" 
+                download="{{ result_image }}"
+                class="bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" 
+                      fill="none" viewBox="0 0 24 24" 
+                      stroke-width="2" stroke="currentColor" 
+                      class="w-6 h-6 mr-2">
+                      <path stroke-linecap="round" stroke-linejoin="round" 
+                            d="M12 4v12m0 0l-4-4m4 4l4-4m-9 8h10" />
+                  </svg>
+                  Download
+              </a>
+          </div>
       </div>
       {% endif %}
     </div>
