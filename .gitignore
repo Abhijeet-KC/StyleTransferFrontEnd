@@ -34,7 +34,7 @@ dist/
 public/
 build/
 *.css.map
-*.css
+.css
 
 # # Compiled Static files
 # static/
