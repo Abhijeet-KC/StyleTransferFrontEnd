@@ -33,8 +33,6 @@ package-lock.json
 dist/
 public/
 build/
-*.css.map
-*.css
 
 # # Compiled Static files
 # static/
@@ -47,3 +45,4 @@ build/
 *.swp
 
 *.pkl
+.model/
