@@ -1,51 +1,54 @@
-# Style Transfer Using Transformer
+# Style Transfer
 
-This project allows you to upload content and style images, and apply style transfer using transformer. The backend is built with Flask, and the frontend is styled using Tailwind CSS for a clean, responsive user interface.
+Implementation of Our Bachelor's in Computer Engineering Minor Project Paper.<br>
+[Arbitrary Style Transfer for Nepali Landscapes and Sites using Transformers](https://drive.google.com/file/d/1R8rbPvl3D_ewrIzncPU__DkSjzLUnwjs/view?usp=drive_link)
 
-## Features
 
-- Upload a content image and a style image.
-- View a live preview of both images before submission.
-- Apply style transfer and view the result.
-- Backend handles image uploads and processes them for style transfer.
+# Team Members
+[Aaditya Joshi](https://github.com/AadityaX86)<br>
+[Abhijeet K.C.](https://github.com/Abhijeet-KC)<br> 
+[Ankit Neupane](https://github.com/AnkitNeupane007)<br>
+[Lijan Shrestha](https://github.com/Lijan09)
 
-## Technologies Used
+# Usage
+## Inference/Testing on Local Machine
+### 1. Clone the Repository  
+```bash
+git clone https://github.com/Abhijeet-KC/StyleTransferFrontEnd.git
+cd StyleTransferFrontEnd
+```
 
-- **Backend:** Flask (Python)
-- **Frontend:** HTML, Tailwind CSS
-- **Image Processing:** Custom style transfer model
-- **Other Libraries:** Werkzeug
+### 2. Set Up a Virtual Environment  
+It is recommended to use a virtual environment to manage dependencies.  
 
-## How It Works
+- **For Windows**  
+  ```bash
+  python -m venv venv
+  venv\Scripts\activate
+  ```
 
-1. **Upload Content and Style Images:**
-   - Navigate to the homepage.
-   - Select both a content image and a style image from your local device.
-   - The images will be previewed on the page as you upload them.
+- **For macOS/Linux**  
+  ```bash
+  python -m venv venv
+  source venv/bin/activate
+  ```
 
-2. **Apply Style Transfer:**
-   - After submitting, the Flask backend processes the images and applies the style transfer.
-   - The result will be displayed on the page.
-
-3. **View Result:**
-   - The result image is shown immediately after the style transfer is completed.
-
-## Dependencies
-
-Make sure to install the necessary dependencies by running:
-
+### 3. Install Requirements  
+Ensure you have Python installed (Python 3.11.* preferred).  
+Then, install dependencies from `requirements.txt`:  
 ```bash
 pip install -r requirements.txt
 ```
+***Make sure you have the [Checkpoint](#more-info) downloaded if you are not using your Trained Model***
 
-The `requirements.txt` should include:
-
+### 4. Run the Website  
+Execute the following command in your terminal:  
+```bash
+python app.py
 ```
-Flask
-Werkzeug
-```
 
-## Contributing
+### More Info
 
-Feel free to open an issue or submit a pull request if you find any bugs or want to suggest improvements. Contributions are always welcome!
-
+- You can Download the Checkpoint At: [Checkpoint](https://drive.google.com/drive/folders/1UO77oZv8S5HGPnhdRRZnYzc43GS0R7WO?usp=drive_link)
+  - The Checkpoint should be At: `.\.model`
+- You can also Check Out the Repository to Run Through the Website At: https://github.com/Abhijeet-KC/StyleTransferFrontEnd
