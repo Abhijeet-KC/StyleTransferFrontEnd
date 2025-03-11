@@ -1,6 +1,6 @@
-# Style Transfer
+# StyleTransferFrontEnd
 
-Implementation of Our Bachelor's in Computer Engineering Minor Project Paper.<br>
+FrontEnd of Implementation of Our Bachelor's in Computer Engineering Minor Project Paper.<br>
 [Arbitrary Style Transfer for Nepali Landscapes and Sites using Transformers](https://drive.google.com/file/d/1R8rbPvl3D_ewrIzncPU__DkSjzLUnwjs/view?usp=drive_link)
 
 
@@ -51,4 +51,3 @@ python app.py
 
 - You can Download the Checkpoint At: [Checkpoint](https://drive.google.com/drive/folders/1UO77oZv8S5HGPnhdRRZnYzc43GS0R7WO?usp=drive_link)
   - The Checkpoint should be At: `.\.model`
-- You can also Check Out the Repository to Run Through the Website At: https://github.com/Abhijeet-KC/StyleTransferFrontEnd
