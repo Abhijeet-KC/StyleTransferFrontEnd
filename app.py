@@ -41,7 +41,7 @@ def model(content_image_path, style_image_path, alpha=1.0):
     transfer_module = TransModule(config=trans_config).to(device)
     decoder = Decoder(d_model=768, seq_input=True).to(device)
 
-    checkpoint = torch.load('./.model/checkpoint_40000_epoch.pkl', map_location=device)  # Update the path if needed
+    checkpoint = torch.load('./.model/checkpoint_40000_epoch.pkl', map_location=device, weights_only=False)  # Update the path if needed
 
     # Load the state dictionaries
     encoder.load_state_dict(checkpoint['encoder'])
@@ -154,4 +154,4 @@ def result_file(filename):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=5000)
