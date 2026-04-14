@@ -25,8 +25,9 @@ if not os.path.exists(RESULT_FOLDER):
     os.makedirs(RESULT_FOLDER)
 
 
-def _load_image_tensor(image_path, size, device):
-    transform = T.Compose([T.Resize((size, size)), T.ToTensor()])
+def _load_image_tensor(image_path, target_shape, device):
+    # target_shape should be a tuple of (H, W)
+    transform = T.Compose([T.Resize(target_shape), T.ToTensor()])
     image = Image.open(image_path).convert('RGB')
     return transform(image).unsqueeze(0).to(device)
 
@@ -39,7 +40,7 @@ def _compute_ssim(output_tensor, content_tensor):
     return float(ssim(content_np, output_np, channel_axis=2, data_range=1.0))
 
 
-def _compute_lpips(output_tensor, content_tensor, device):
+def _compute_lpips(tensor_a, tensor_b, device):
     try:
         import lpips
     except Exception:
@@ -48,38 +49,37 @@ def _compute_lpips(output_tensor, content_tensor, device):
     lpips_model = lpips.LPIPS(net='alex').to(device)
     lpips_model.eval()
 
-    output_scaled = output_tensor * 2.0 - 1.0
-    content_scaled = content_tensor * 2.0 - 1.0
+    a_scaled = tensor_a * 2.0 - 1.0
+    b_scaled = tensor_b * 2.0 - 1.0
     with torch.no_grad():
-        value = lpips_model(output_scaled, content_scaled)
+        value = lpips_model(a_scaled, b_scaled)
     return float(value.item())
 
 
-def _compute_single_image_fid(output_tensor, content_tensor, device):
+def _compute_single_image_fid(output_tensor, target_tensor, device):
     inception = models.inception_v3(weights=models.Inception_V3_Weights.DEFAULT).to(device)
     inception.fc = torch.nn.Identity()
     inception.eval()
 
-    # resize_for_inception = T.Resize((299, 299))
-    # output_in = resize_for_inception(output_tensor)
-    # content_in = resize_for_inception(content_tensor)
+    # Do not double-normalize, inception_v3(transform_input=True) expects [0, 1]
     transform = T.Compose([
-    T.Resize((299, 299)),
-    T.Normalize(mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225])
+        T.Resize((299, 299))
     ])
 
     output_in = transform(output_tensor)
-    content_in = transform(content_tensor)
+    target_in = transform(target_tensor)
     with torch.no_grad():
         out_pred = inception(output_in)
-        content_pred = inception(content_in)
+        target_pred = inception(target_in)
 
         feat_output = out_pred.logits.squeeze(0) if hasattr(out_pred, 'logits') else out_pred.squeeze(0)
-        feat_content = content_pred.logits.squeeze(0) if hasattr(content_pred, 'logits') else content_pred.squeeze(0)
+        feat_target = target_pred.logits.squeeze(0) if hasattr(target_pred, 'logits') else target_pred.squeeze(0)
 
-    # Single-image approximation where covariance terms vanish.
-    return float(torch.sum((feat_output - feat_content) ** 2).item())
+    # Standard FID is the *squared* Wasserstein distance between population means.
+    # For single images, the means don't average out, and the squared distance explodes.
+    # Taking the square root gives the un-squared 2-Wasserstein distance (True Euclidean distance),
+    # which is much more stable and visually interpretable for a one-to-one image comparison.
+    return float(torch.sqrt(torch.sum((feat_output - feat_target) ** 2)).item())
 
 
 def _gram_matrix(x):
@@ -122,13 +122,15 @@ def _compute_content_and_style_losses(output_tensor, content_tensor, style_tenso
 
 
 def _compute_eval_metrics(output_tensor, content_image_path, style_image_path, device):
-    size = output_tensor.shape[-1]
-    content_tensor = _load_image_tensor(content_image_path, size, device)
-    style_tensor = _load_image_tensor(style_image_path, size, device)
+    h, w = output_tensor.shape[2], output_tensor.shape[3]
+    target_shape = (h, w)
+    content_tensor = _load_image_tensor(content_image_path, target_shape, device)
+    style_tensor = _load_image_tensor(style_image_path, target_shape, device)
 
     metrics = {
         'SSIM': _compute_ssim(output_tensor, content_tensor),
-        'LPIPS': _compute_lpips(output_tensor, content_tensor, device),
+        'LPIPS Content': _compute_lpips(output_tensor, content_tensor, device),
+        'LPIPS Style': _compute_lpips(output_tensor, style_tensor, device),
         'FID': _compute_single_image_fid(output_tensor, content_tensor, device),
     }
     

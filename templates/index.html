@@ -311,10 +311,20 @@
                         <td class="px-4 py-2 border-b border-gray-200">{{ '%.6f'|format(eval_metrics['SSIM']) }}</td>
                       </tr>
                       <tr>
-                        <td class="px-4 py-2 border-b border-gray-200">LPIPS</td>
+                        <td class="px-4 py-2 border-b border-gray-200">LPIPS (Content)</td>
                         <td class="px-4 py-2 border-b border-gray-200">
-                          {% if eval_metrics['LPIPS'] is not none %}
-                            {{ '%.6f'|format(eval_metrics['LPIPS']) }}
+                          {% if eval_metrics['LPIPS Content'] is not none %}
+                            {{ '%.6f'|format(eval_metrics['LPIPS Content']) }}
+                          {% else %}
+                            Unavailable (install lpips)
+                          {% endif %}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="px-4 py-2 border-b border-gray-200">LPIPS (Style)</td>
+                        <td class="px-4 py-2 border-b border-gray-200">
+                          {% if eval_metrics['LPIPS Style'] is not none %}
+                            {{ '%.6f'|format(eval_metrics['LPIPS Style']) }}
                           {% else %}
                             Unavailable (install lpips)
                           {% endif %}
