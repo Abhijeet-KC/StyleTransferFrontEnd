@@ -44,5 +44,5 @@ build/
 *.bak
 *.swp
 
-*.pkl
 .model/
+*.pkl

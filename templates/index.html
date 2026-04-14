@@ -293,6 +293,50 @@
                   </svg>
                   Download
               </a>
+
+              {% if eval_metrics %}
+              <div class="w-full max-w-2xl mt-6">
+                <h3 class="text-xl font-bold text-black mb-3 text-center">Evaluation Metrics</h3>
+                <div class="overflow-x-auto">
+                  <table class="min-w-full border border-gray-300 rounded-lg overflow-hidden">
+                    <thead class="bg-gray-100">
+                      <tr>
+                        <th class="text-left px-4 py-2 border-b border-gray-300">Metric</th>
+                        <th class="text-left px-4 py-2 border-b border-gray-300">Value</th>
+                      </tr>
+                    </thead>
+                    <tbody class="bg-white">
+                      <tr>
+                        <td class="px-4 py-2 border-b border-gray-200">SSIM</td>
+                        <td class="px-4 py-2 border-b border-gray-200">{{ '%.6f'|format(eval_metrics['SSIM']) }}</td>
+                      </tr>
+                      <tr>
+                        <td class="px-4 py-2 border-b border-gray-200">LPIPS</td>
+                        <td class="px-4 py-2 border-b border-gray-200">
+                          {% if eval_metrics['LPIPS'] is not none %}
+                            {{ '%.6f'|format(eval_metrics['LPIPS']) }}
+                          {% else %}
+                            Unavailable (install lpips)
+                          {% endif %}
+                        </td>
+                      </tr>
+                      <tr>
+                        <td class="px-4 py-2 border-b border-gray-200">FID</td>
+                        <td class="px-4 py-2 border-b border-gray-200">{{ '%.6f'|format(eval_metrics['FID']) }}</td>
+                      </tr>
+                      <tr>
+                        <td class="px-4 py-2 border-b border-gray-200">Content Loss</td>
+                        <td class="px-4 py-2 border-b border-gray-200">{{ '%.6f'|format(eval_metrics['Content Loss']) }}</td>
+                      </tr>
+                      <tr>
+                        <td class="px-4 py-2">Style Loss</td>
+                        <td class="px-4 py-2">{{ '%.6f'|format(eval_metrics['Style Loss']) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              {% endif %}
           </div>
       </div>
       {% endif %}

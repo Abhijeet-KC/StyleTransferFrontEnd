@@ -8,6 +8,9 @@ from Model.Decoder import Decoder
 import torch
 import torchvision.transforms as T
 from torchvision.utils import save_image
+from torchvision import models
+from skimage.metrics import structural_similarity as ssim
+import numpy as np
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -20,6 +23,124 @@ if not os.path.exists(UPLOAD_FOLDER):
 
 if not os.path.exists(RESULT_FOLDER):
     os.makedirs(RESULT_FOLDER)
+
+
+def _load_image_tensor(image_path, size, device):
+    transform = T.Compose([T.Resize((size, size)), T.ToTensor()])
+    image = Image.open(image_path).convert('RGB')
+    return transform(image).unsqueeze(0).to(device)
+
+
+def _compute_ssim(output_tensor, content_tensor):
+    output_np = output_tensor.squeeze(0).permute(1, 2, 0).detach().cpu().numpy()
+    content_np = content_tensor.squeeze(0).permute(1, 2, 0).detach().cpu().numpy()
+    output_np = np.clip(output_np, 0.0, 1.0)
+    content_np = np.clip(content_np, 0.0, 1.0)
+    return float(ssim(content_np, output_np, channel_axis=2, data_range=1.0))
+
+
+def _compute_lpips(output_tensor, content_tensor, device):
+    try:
+        import lpips
+    except Exception:
+        return None
+
+    lpips_model = lpips.LPIPS(net='alex').to(device)
+    lpips_model.eval()
+
+    output_scaled = output_tensor * 2.0 - 1.0
+    content_scaled = content_tensor * 2.0 - 1.0
+    with torch.no_grad():
+        value = lpips_model(output_scaled, content_scaled)
+    return float(value.item())
+
+
+def _compute_single_image_fid(output_tensor, content_tensor, device):
+    inception = models.inception_v3(weights=models.Inception_V3_Weights.DEFAULT).to(device)
+    inception.fc = torch.nn.Identity()
+    inception.eval()
+
+    # resize_for_inception = T.Resize((299, 299))
+    # output_in = resize_for_inception(output_tensor)
+    # content_in = resize_for_inception(content_tensor)
+    transform = T.Compose([
+    T.Resize((299, 299)),
+    T.Normalize(mean=[0.485, 0.456, 0.406],
+                std=[0.229, 0.224, 0.225])
+    ])
+
+    output_in = transform(output_tensor)
+    content_in = transform(content_tensor)
+    with torch.no_grad():
+        out_pred = inception(output_in)
+        content_pred = inception(content_in)
+
+        feat_output = out_pred.logits.squeeze(0) if hasattr(out_pred, 'logits') else out_pred.squeeze(0)
+        feat_content = content_pred.logits.squeeze(0) if hasattr(content_pred, 'logits') else content_pred.squeeze(0)
+
+    # Single-image approximation where covariance terms vanish.
+    return float(torch.sum((feat_output - feat_content) ** 2).item())
+
+
+def _gram_matrix(x):
+    b, c, h, w = x.size()
+    features = x.view(b, c, h * w)
+    gram = torch.bmm(features, features.transpose(1, 2))
+    return gram / (c * h * w)
+
+
+def _compute_content_and_style_losses(output_tensor, content_tensor, style_tensor, device):
+    vgg = models.vgg19(weights=models.VGG19_Weights.IMAGENET1K_V1).features.to(device).eval()
+    for parameter in vgg.parameters():
+        parameter.requires_grad = False
+
+    content_layer = 21
+    style_layers = [0, 5, 10, 19, 28]
+
+    out_feat = output_tensor
+    content_feat = content_tensor
+    style_feat = style_tensor
+
+    content_loss = torch.tensor(0.0, device=device)
+    style_loss = torch.tensor(0.0, device=device)
+
+    with torch.no_grad():
+        for idx, layer in enumerate(vgg):
+            out_feat = layer(out_feat)
+            content_feat = layer(content_feat)
+            style_feat = layer(style_feat)
+
+            if idx == content_layer:
+                content_loss = torch.mean((out_feat - content_feat) ** 2)
+
+            if idx in style_layers:
+                gram_out = _gram_matrix(out_feat)
+                gram_style = _gram_matrix(style_feat)
+                style_loss = style_loss + torch.mean((gram_out - gram_style) ** 2)
+
+    return float(content_loss.item()), float(style_loss.item())
+
+
+def _compute_eval_metrics(output_tensor, content_image_path, style_image_path, device):
+    size = output_tensor.shape[-1]
+    content_tensor = _load_image_tensor(content_image_path, size, device)
+    style_tensor = _load_image_tensor(style_image_path, size, device)
+
+    metrics = {
+        'SSIM': _compute_ssim(output_tensor, content_tensor),
+        'LPIPS': _compute_lpips(output_tensor, content_tensor, device),
+        'FID': _compute_single_image_fid(output_tensor, content_tensor, device),
+    }
+    
+    content_loss, style_loss = _compute_content_and_style_losses(
+        output_tensor,
+        content_tensor,
+        style_tensor,
+        device,
+    )
+    metrics['Content Loss'] = content_loss
+    metrics['Style Loss'] = style_loss
+    return metrics
 
 def model(content_image_path, style_image_path, alpha=1.0):
     # Load Device
@@ -72,22 +193,27 @@ def model(content_image_path, style_image_path, alpha=1.0):
     content_img = only_tensor_transforms(content_img).unsqueeze(0).to(device)
     style_img = shape_transform(style_img).unsqueeze(0).to(device)
 
-    # Forward pass through encoders
-    forward_content = encoder(content_img, arbitrary_input=True)  # [b, h, w, c]
-    forward_style = encoder(style_img, arbitrary_input=True)      # [b, h, w, c]
+    with torch.no_grad():
+        # Forward pass through encoders
+        forward_content = encoder(content_img, arbitrary_input=True)  # [b, h, w, c]
+        forward_style = encoder(style_img, arbitrary_input=True)      # [b, h, w, c]
 
-    output_content, content_res = forward_content[0], forward_content[2]  # [b, c, h, w]
-    output_style, style_res = forward_style[0], forward_style[2]      # [b, c, h, w]
+        output_content, content_res = forward_content[0], forward_content[2]  # [b, c, h, w]
+        output_style, style_res = forward_style[0], forward_style[2]      # [b, c, h, w]
 
-    # Merge the features
-    merged_features = transfer_module(output_content, output_style)
+        # Merge the features
+        merged_features = transfer_module(output_content, output_style)
 
-    # Decode the merged features
-    output = decoder(merged_features, content_res)  # [b, c, h, w]
+        # Decode the merged features
+        output = decoder(merged_features, content_res)  # [b, c, h, w]
 
-    # Convert to jpg image and save
-    output = output.squeeze(0).detach().cpu()
-    save_image(output, os.path.join(RESULT_FOLDER, 'result.png'))
+    output = output.detach()
+    metrics = _compute_eval_metrics(output, content_image_path, style_image_path, device)
+
+    # Convert to png image and save
+    output_to_save = output.squeeze(0).detach().cpu()
+    save_image(output_to_save, os.path.join(RESULT_FOLDER, 'result.png'))
+    return metrics
     
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -119,9 +245,11 @@ def index():
         content_image_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(content_image.filename))
         content_image.save(content_image_path)
 
+        eval_metrics = None
+
         # If alpha > 0.0, apply style transfer
         if alpha > 0.0:
-            model(content_image_path, style_image_path, alpha)
+            eval_metrics = model(content_image_path, style_image_path, alpha)
         else:
             # Process content image even if no style transfer is applied
             content_img = Image.open(content_image_path).convert('RGB')
@@ -133,7 +261,8 @@ def index():
         # Display uploaded and result images after processing
         return render_template(
             'index.html',
-            result_image=os.path.basename(result_image_path)
+            result_image=os.path.basename(result_image_path),
+            eval_metrics=eval_metrics,
         )
 
     # If GET request, show the form without the result image
@@ -150,7 +279,7 @@ def uploaded_file(filename):
 # Route to serve the result image
 @app.route('/results/<filename>')
 def result_file(filename):
-    return send_file(os.path.join(app.config['RESULT_FOLDER'], filename), mimetype='image/jpeg')
+    return send_file(os.path.join(app.config['RESULT_FOLDER'], filename), mimetype='image/png')
 
 
 if __name__ == '__main__':
